@@ -21,7 +21,7 @@ jobs:
         pip install pylint flake8
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files -- "*.py" ":!:tests\*.py" ":!:migrations/*.py")
+        pylint $(git ls-files -- "*.py" ":!:tests/*.py" ":!:migrations/*.py")
     - name: Analysing the code with flake8
       run: |
-        flake8 $(git ls-files -- "*.py" ":!:tests\*.py" ":!:migrations/*.py")
+        flake8 $(git ls-files -- "*.py" ":!:tests/*.py" ":!:migrations/*.py")
