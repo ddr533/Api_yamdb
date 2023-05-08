@@ -1,6 +1,7 @@
 requests==2.26.0
 Django==3.2
 djangorestframework==3.12.4
+djangorestframework-simplejwt==5.2.2
 flake8==6.0.0
 pylint==2.17.4
 PyJWT==2.1.0
