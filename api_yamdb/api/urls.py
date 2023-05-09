@@ -5,7 +5,6 @@ from rest_framework.routers import DefaultRouter
 
 from .views import CommentViewSet, ReviewViewSet
 
-# pylint: disable=invalid-name
 app_name = 'api'
 
 router = DefaultRouter()
