@@ -52,7 +52,8 @@ def token(request):
             token = AccessToken.for_user(user)
             return Response({'token': str(token)}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
-            return Response({'error': 'Invalid username or confirmation code.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid username or confirmation code.'}, 
+                            status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
