@@ -148,5 +148,9 @@ dmypy.json
 # папки со статикой и медиа
 media/
 
+<<<<<<< HEAD
 
 requests.http
+=======
+/api_yamdb/sent_emails/
+>>>>>>> development
