@@ -1,8 +1,10 @@
+"""Сериализаторы для моделей."""
+
 import datetime as dt
 
 from rest_framework import serializers
 
-from reviews.models import Category, Genre, GenreTitle, Title
+from reviews.models import Category, Genre, GenreTitle, Title, Comment, Review
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -56,3 +58,25 @@ class TitleSerializer(serializers.ModelSerializer):
         except Exception:
             raise Exception('Такой записи в базе пока нет')
         return title
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Review."""
+
+    # author = serializers.SlugRelatedField(slug_field='username',
+    #                                       read_only=True)
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Comment."""
+
+    # author = serializers.SlugRelatedField(slug_field='username',
+    #                                       read_only=True)
+    class Meta:
+        model = Comment
+        fields = '__all__'
+        read_only_fields = ('review_id',)
+
