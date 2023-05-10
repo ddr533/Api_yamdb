@@ -1,10 +1,43 @@
 """Обработчики для сериализаторов."""
 
+from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
-from reviews.models import Review
+from rest_framework import mixins, viewsets
 
-from .serializers import CommentSerializer, ReviewSerializer
+from reviews.models import Category, Genre, Title, Review
+from .pagination import DefaultPagination
+from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
+                          CommentSerializer, ReviewSerializer)
+
+
+
+class CreateListDestroyViewSet(mixins.CreateModelMixin,
+                               mixins.ListModelMixin,
+                               mixins.DestroyModelMixin,
+                               viewsets.GenericViewSet):
+    pass
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
+    pagination_class = DefaultPagination
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('category', 'genre', 'name', 'year')
+
+
+class GenreViewSet(CreateListDestroyViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    lookup_field = 'slug'
+    pagination_class = DefaultPagination
+
+
+class CategoryViewSet(CreateListDestroyViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    lookup_field = 'slug'
+    pagination_class = DefaultPagination
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -39,3 +72,4 @@ class CommentViewSet(viewsets.ModelViewSet):
         review_id = self.kwargs.get('review_id')
         review = get_object_or_404(Review, id=review_id)
         return review.comments.all()
+
