@@ -71,7 +71,8 @@ class Review(models.Model):
 
     title_id = models.ForeignKey(
         to=Title,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='reviews'
     )
     text = models.TextField(
         verbose_name='Текст отзыва',
@@ -112,7 +113,10 @@ class Comment(models.Model):
         related_name='comments',
         verbose_name='Отзыв'
     )
-    author = models.IntegerField()
+    author = models.ForeignKey(
+        to=User,
+        on_delete=models.CASCADE
+    )
     text = models.TextField(
         max_length=500,
         verbose_name='Текст',
