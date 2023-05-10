@@ -6,6 +6,7 @@ python manage.py load_data model_name path
 model_name - имя модели, в которую передаются данные.
 path - путь до файла *.csv
 Так как модели связаны внешними ключами, то заполнять базу нужно в сл. порядке:
+
 python manage.py load_data User static/data/users.csv
 python manage.py load_data Category static/data/category.csv
 python manage.py load_data Genre static/data/genre.csv
