@@ -77,22 +77,23 @@ class Command(BaseCommand):
                             f'Объект с id = {row["id"]} уже существует.\n'))
                     continue
                 if model == Review:
-                    title = Title.objects.get(id=row['title_id'])
-                    row['title_id'] = title
-                    author = get_object_or_404(User, id=row['author'])
+                    title = Title.objects.get(id=row.pop('title_id'))
+                    row['title'] = title
+                    author = get_object_or_404(User, id=row.get('author'))
                     row['author'] = author
                 if model == Title:
-                    category = get_object_or_404(Category, id=row['category'])
+                    category = get_object_or_404(Category,
+                                                 id=row.get('category'))
                     row['category'] = category
                 if model == GenreTitle:
-                    title = get_object_or_404(Title, id=row['title_id'])
-                    row['title_id'] = title
-                    genre = get_object_or_404(Genre, id=row['genre_id'])
-                    row['genre_id'] = genre
+                    title = get_object_or_404(Title, id=row.pop('title_id'))
+                    row['title'] = title
+                    genre = get_object_or_404(Genre, id=row.pop('genre_id'))
+                    row['genre'] = genre
                 if model == Comment:
-                    review = get_object_or_404(Review, id=row['review_id'])
-                    row['review_id'] = review
-                    author = get_object_or_404(User, id=row['author'])
+                    review = get_object_or_404(Review, id=row.pop('review_id'))
+                    row['review'] = review
+                    author = get_object_or_404(User, id=row.get('author'))
                     row['author'] = author
                 objects_list.append(model.objects.create(**row))
                 

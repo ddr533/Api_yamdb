@@ -79,11 +79,12 @@ class TitleSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         genres = validated_data.pop('genre')
         category = validated_data['category']
+
         try:
-            Category.objects.get(slug=category)
+            Category.objects.get(name=category)
             title = Title.objects.create(**validated_data)
             for genre in genres:
-                current_genre = Genre.objects.get(slug=genre)
+                current_genre = Genre.objects.get(name=genre)
                 GenreTitle.objects.create(genre=current_genre, title=title)
         except Exception:
             raise Exception('Такой записи в базе пока нет')
@@ -93,19 +94,18 @@ class TitleSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Review."""
 
-    # author = serializers.SlugRelatedField(slug_field='username',
-    #                                       read_only=True)
+    author = serializers.SlugRelatedField(slug_field='username',
+                                          read_only=True)
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'score', 'pub_date' )
 
 
 class CommentSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Comment."""
 
-    # author = serializers.SlugRelatedField(slug_field='username',
-    #                                       read_only=True)
+    author = serializers.SlugRelatedField(slug_field='username',
+                                          read_only=True)
     class Meta:
         model = Comment
-        fields = '__all__'
-        read_only_fields = ('review_id',)
+        fields = ('id', 'text', 'author', 'pub_date' )
