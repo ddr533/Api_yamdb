@@ -6,10 +6,11 @@ from rest_framework import mixins, viewsets, status
 
 from reviews.models import Category, Genre, Title, Review, User
 from .pagination import DefaultPagination
-from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
-                          CommentSerializer, ReviewSerializer, UserSerializer,
+from .serializers import (CategorySerializer, GenreSerializer, TitleReadSerializer, 
+                          TitleWriteSerializer, CommentSerializer,
+                          ReviewSerializer, UserSerializer,
                           SignUpSerializer, TokenSerializer)
-from django.shortcuts import render
+from .permissions import AdminOrReadOnly
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -119,15 +120,21 @@ class CreateListDestroyViewSet(mixins.CreateModelMixin,
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    serializer_class = TitleSerializer
     pagination_class = DefaultPagination
+    permission_classes = (AdminOrReadOnly, )
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('category', 'genre', 'name', 'year')
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleReadSerializer
+        return TitleWriteSerializer
 
 
 class GenreViewSet(CreateListDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    permission_classes = (AdminOrReadOnly, )
     lookup_field = 'slug'
     pagination_class = DefaultPagination
 
@@ -135,6 +142,7 @@ class GenreViewSet(CreateListDestroyViewSet):
 class CategoryViewSet(CreateListDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = (AdminOrReadOnly, )
     lookup_field = 'slug'
     pagination_class = DefaultPagination
 
