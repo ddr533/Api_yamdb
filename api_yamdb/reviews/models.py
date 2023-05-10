@@ -69,12 +69,18 @@ class GenreTitle(models.Model):
 class Review(models.Model):
     """Модель отзывов на произведения."""
 
-    title_id = models.IntegerField()
+    title_id = models.ForeignKey(
+        to=Title,
+        on_delete=models.CASCADE
+    )
     text = models.TextField(
         verbose_name='Текст отзыва',
         max_length=5000,
     )
-    author = models.IntegerField()
+    author = models.ForeignKey(
+        to=User,
+        on_delete=models.CASCADE
+    )
     score = models.IntegerField(
         validators=[MinValueValidator(1),
                     MaxValueValidator(10)])
