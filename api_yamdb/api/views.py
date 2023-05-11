@@ -1,17 +1,20 @@
 """Обработчики для представлений."""
 
+from django.db import IntegrityError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError
 from rest_framework import mixins, viewsets, status, filters
 from rest_framework.pagination import LimitOffsetPagination
 
 from reviews.models import Category, Genre, Title, Review, User
-from .serializers import (CategorySerializer, GenreSerializer, TitleReadSerializer, 
+from .serializers import (CategorySerializer, GenreSerializer, TitleReadSerializer,
                           TitleWriteSerializer, CommentSerializer,
                           ReviewSerializer, UserSerializer,
                           SignUpSerializer, TokenSerializer)
+
+from .permissions import IsAuthorOrStaffOrReadOnly, AdminOrReadOnly
 from .filters import TitleFilter
-from .permissions import AdminOrReadOnly
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -156,12 +159,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
     """Обработчик запросов к отзывам на произведения."""
 
     serializer_class = ReviewSerializer
-    # permission_classes =
+    permission_classes = (IsAuthorOrStaffOrReadOnly,)
 
     def perform_create(self, serializer):
-        title_id = self.kwargs.get('title_id')
-        title = get_object_or_404(Title, id=title_id)
-        serializer.save(author=self.request.user, title_id=title)
+        try:
+            title_id = self.kwargs.get('title_id')
+            title = get_object_or_404(Title, id=title_id)
+            serializer.save(author=self.request.user, title=title)
+        except IntegrityError as e:
+            raise ValidationError(
+                f'Отзыв можно оставлять только один раз, {e}')
+
 
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
@@ -173,12 +181,12 @@ class CommentViewSet(viewsets.ModelViewSet):
     """Обработчик запросов к комментариям на отзывы."""
 
     serializer_class = CommentSerializer
-    # permission_classes =
+    permission_classes = (IsAuthorOrStaffOrReadOnly,)
 
     def perform_create(self, serializer):
         review_id = self.kwargs.get('review_id')
         review = get_object_or_404(Review, id=review_id)
-        serializer.save(review_id=review)
+        serializer.save(author=self.request.user, review=review)
 
     def get_queryset(self):
         review_id = self.kwargs.get('review_id')
