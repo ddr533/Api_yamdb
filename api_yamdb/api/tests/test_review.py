@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from review.models import (User, Genre, Category, Title,
+from reviews.models import (User, Genre, Category, Title,
                            Review, Comment, GenreTitle)
 
 
@@ -18,15 +18,15 @@ class TestMyAPI(APITestCase):
             email='admin@example.com'
         )
         cls.user = User.objects.create_user(
-            username='user',
+            username='user_test',
             password='password',
-            email='user@example.com',
+            email='user@example_1.com',
             role='user'
         )
         cls.moderator = User.objects.create_user(
-            username='user',
+            username='user_mod',
             password='password',
-            email='user@example.com',
+            email='user@example_2.com',
             role='moderator'
         )
         cls.genre = Genre.objects.create(
@@ -40,10 +40,12 @@ class TestMyAPI(APITestCase):
 
         cls.title = Title.objects.create(
             name='test_title',
-            year=2025,
-            genre=cls.genre,
-            category=cls.category
-        )
+            category=cls.category,
+            year=2025)
+
+        cls.title.genre.set([cls.genre])
+
+
         cls.review = Review.objects.create(
             title=cls.title,
             author= cls.user,
@@ -57,7 +59,7 @@ class TestMyAPI(APITestCase):
         self.admin_client = APIClient()
         self.moderator_client = APIClient()
         self.admin_client.force_authenticate(self.admin)
-        self.admin_client.force_authenticate(self.moderator)
+        self.moderator_client.force_authenticate(self.moderator)
         self.user_client.force_authenticate(self.user)
 
 
@@ -65,8 +67,13 @@ class TestMyAPI(APITestCase):
         """Анонимный пользователь может получать данные из GET запроса."""
 
         urls = (
-            (reverse('api:review-list'), status.HTTP_200_OK),
-            (reverse('api:review-detail', kwargs={'pk': self.review})))
+            (reverse('api:reviews-list',
+                     kwargs={'title_id': self.title.id}),
+             status.HTTP_200_OK),
+            (reverse('api:reviews-detail',
+                     kwargs={'title_id': self.title.id, 'pk': self.review.id}),
+             status.HTTP_200_OK)
+        )
 
         for url, expected_status_code in urls:
             with self.subTest(url=url, status_code=expected_status_code):
@@ -78,8 +85,12 @@ class TestMyAPI(APITestCase):
         """Авторизованный пользователь может получать данные из GET запроса."""
 
         urls = (
-            (reverse('api:review-list'), status.HTTP_200_OK),
-            (reverse('api:review-detail', kwargs={'pk': self.review})))
+            (reverse('api:reviews-list',
+                     kwargs={'title_id': self.title.id}),
+             status.HTTP_200_OK),
+            (reverse('api:reviews-detail',
+                     kwargs={'title_id': self.title.id, 'pk': self.review.id}),
+             status.HTTP_200_OK))
 
         for url, expected_status_code in urls:
             with self.subTest(url=url, status_code=expected_status_code):
@@ -94,57 +105,60 @@ class TestMyAPI(APITestCase):
             'score': 10,
             'text': 'test',
         }
-        response = self.anon_client.post(reverse('api:review-list'), data=data)
+        response = self.anon_client.post(
+            reverse('api:reviews-list', kwargs={'title_id': self.title.id}),
+            data=data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-        response = self.moderator_client.post(reverse('api:review-list'),
-                                              data=data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.moderator_client.post(
+            reverse('api:reviews-list', kwargs={'title_id': self.title.id}),
+            data=data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
     def test_edit_request_for_post(self):
-        """Изменять запись может только автор, администратор и админ."""
+        """Изменять отзыв может только автор, администратор и админ."""
+        url = reverse('api:reviews-detail',
+                    kwargs={'title_id': 1, 'pk': self.review.id})
         data = {
             'score': 1,
             'text': 'test_1',
         }
         new_user = User.objects.create_user(
-            username='user_1',
+            username='new_user',
             password='password',
-            email='user@example_1.com',
+            email='user@example_3.com',
             role='user'
         )
         new_user_client = APIClient()
-        new_user_client.force_authenticate(new_user_client)
+        new_user_client.force_authenticate(new_user)
 
-        response = new_user_client.put(
-            reverse('api:review-detail', kwargs={'pk': 1}), data=data)
+        response = new_user_client.put(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        response = self.anon_client.put(
-            reverse('api:review-detail', kwargs={'pk': 1}), data=data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        response = self.anon_client.put(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-        response = self.admin_client.put(
-            reverse('api:review-detail', kwargs={'pk': 1}), data=data)
+        response = self.admin_client.put(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.moderator_client.put(
-            reverse('api:review-detail', kwargs={'pk': 1}), data=data)
+        response = self.moderator_client.put(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.user_client.put(
-            reverse('api:review-detail', kwargs={'pk': 1}), data=data)
+        response = self.user_client.put(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.user_client.delete(
-            reverse('api:post-detail', kwargs={'pk': 2}))
+        response = self.user_client.delete(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        response = self.moderator_client.delete(
-            reverse('api:review-detail', kwargs={'pk': 1}), data=data)
+    def test_moderator_can_del_review(self):
+        """Модератор может удалить отзыв."""
+        response = self.moderator_client.delete(reverse('api:reviews-detail',
+                    kwargs={'title_id': 1, 'pk': self.review.id}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        response = self.admin_client.delete(
-            reverse('api:review-detail', kwargs={'pk': 1}), data=data)
+    def test_admin_can_del_review(self):
+        """Админ может удалить отзыв."""
+        response = self.admin_client.delete(reverse('api:reviews-detail',
+                    kwargs={'title_id': 1, 'pk': self.review.id}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
