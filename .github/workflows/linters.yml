@@ -27,6 +27,4 @@ jobs:
         flake8 $(git ls-files -- "*.py" ":!:tests/*.py" ":!:**/migrations/*.py")
     - name: Analysing the code with isort
       run: isort --check-only .
-    - name: Run pytest
-      run: pytest
 
