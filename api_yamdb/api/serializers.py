@@ -2,8 +2,8 @@
 
 import datetime as dt
 import re
+from django.db.models import Avg
 from rest_framework import serializers
-
 from reviews.models import (Category, Genre, GenreTitle, Title,
                             Comment, Review, User)
 
@@ -45,7 +45,7 @@ class UserSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = ('__all__')
+        fields = ('name', 'slug')
         model = Category
         extra_kwargs = {
             'url': {'lookup_field': 'slug'}
@@ -55,14 +55,14 @@ class CategorySerializer(serializers.ModelSerializer):
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = ('__all__')
+        fields = ('name', 'slug')
         model = Genre
         extra_kwargs = {
             'url': {'lookup_field': 'slug'}
         }
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleWriteSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         many=True,
         queryset=Genre.objects.all(),
@@ -81,36 +81,36 @@ class TitleSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Проверьте год выпуска!')
         return value
 
-    def create(self, validated_data):
-        genres = validated_data.pop('genre')
-        category = validated_data['category']
-        try:
-            Category.objects.get(slug=category)
-            title = Title.objects.create(**validated_data)
-            for genre in genres:
-                current_genre = Genre.objects.get(slug=genre)
-                GenreTitle.objects.create(genre=current_genre, title=title)
-        except Exception:
-            raise Exception('Такой записи в базе пока нет')
-        return title
+
+class TitleReadSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(read_only=True, many=True)
+    category = CategorySerializer(read_only=True)
+    rating = serializers.SerializerMethodField()
+
+    class Meta:
+        fields = ('__all__')
+        model = Title
+
+    def get_rating(self, obj):
+        rating = Review.objects.filter(title=obj).aggregate(res=Avg('score'))
+        return int(round(rating['res'], 0)) if rating['res'] else None
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Review."""
 
-    # author = serializers.SlugRelatedField(slug_field='username',
-    #                                       read_only=True)
+    author = serializers.SlugRelatedField(slug_field='username',
+                                          read_only=True)
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'score', 'pub_date' )
 
 
 class CommentSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Comment."""
 
-    # author = serializers.SlugRelatedField(slug_field='username',
-    #                                       read_only=True)
+    author = serializers.SlugRelatedField(slug_field='username',
+                                          read_only=True)
     class Meta:
         model = Comment
-        fields = '__all__'
-        read_only_fields = ('review_id',)
+        fields = ('id', 'text', 'author', 'pub_date' )
