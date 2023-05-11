@@ -2,11 +2,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-<<<<<<< HEAD
 from reviews.models import (User, Genre, Category, Title,
-=======
 from review.models import (User, Genre, Category, Title,
->>>>>>> origin/development
                            Review, Comment, GenreTitle)
 
 
