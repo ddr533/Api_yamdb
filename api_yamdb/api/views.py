@@ -3,17 +3,15 @@
 from django.db import IntegrityError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import ValidationError
 from rest_framework import mixins, viewsets, status, filters
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
-
 from reviews.models import Category, Genre, Title, Review, User
 from .serializers import (CategorySerializer, GenreSerializer, TitleReadSerializer,
                           TitleWriteSerializer, CommentSerializer,
                           ReviewSerializer, UserSerializer,
                           SignUpSerializer, TokenSerializer)
 
-from .permissions import IsAuthorOrStaffOrReadOnly, AdminOrReadOnly
 from .filters import TitleFilter
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -22,6 +20,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 from django.utils.crypto import get_random_string
 from api_yamdb.settings import EMAIL_HOST_USER
 from django.core.mail import send_mail
+from .permissions import (CastomAdminSuperUser, UserUpdateRole, 
+                          IsAuthorOrStaffOrReadOnly, AdminOrReadOnly)
 
 
 @api_view(['POST'])
@@ -31,8 +31,10 @@ def signup(request):
     if serializer.is_valid():
         email = serializer.validated_data['email']
         username = serializer.validated_data['username']
+
         if username == 'me':
             raise AssertionError()
+        
         confirmation_code = get_random_string(length=12)
         send_mail(
             'Confirmation code',
@@ -44,6 +46,7 @@ def signup(request):
         user, created = User.objects.get_or_create(email=email, username=username)
         user.confirmation_code = confirmation_code
         user.save()
+        
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -58,6 +61,7 @@ def token(request):
         confirmation_code = serializer.validated_data['confirmation_code']
         try:
             user = User.objects.get(username=username, confirmation_code=confirmation_code)
+
             user.confirmation_code = ''
             user.save()
             token = AccessToken.for_user(user)
@@ -75,12 +79,30 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     lookup_field = 'username'
 
+    def get_permissions(self):
+        if self.action == 'user_creat':
+            permission_classes = [CastomAdminSuperUser]
+        if self.action == 'user_list':
+            permission_classes = [CastomAdminSuperUser]
+        if self.action == 'user_destroy':
+            permission_classes = [CastomAdminSuperUser]
+        if self.action == 'user_retrieve':
+            permission_classes = [CastomAdminSuperUser]
+        if self.action == 'patch_me_user':
+            permission_classes = [UserUpdateRole]
+        else:
+            permission_classes = self.permission_classes
+        return [permission() for permission in permission_classes]
+
     def user_list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
+ 
     def user_create(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        if request.data.get('username') == 'me':
+            raise AssertionError()
         user = serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
