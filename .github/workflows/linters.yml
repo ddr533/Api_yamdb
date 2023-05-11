@@ -20,12 +20,10 @@ jobs:
         pip install -r requirements.txt
         pip install isort flake8
         pip install pytest
+    - name: Run pytest
+      run: pytest
     - name: Analysing the code with flake8
       run: |
         flake8 $(git ls-files -- "*.py" ":!:tests/*.py" ":!:**/migrations/*.py")
     - name: Analysing the code with isort
-      run: |
-        isort --check-only .
-    - name: Run pytest
-      run: |
-        pytest
+      run: isort --check-only .
