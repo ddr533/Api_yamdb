@@ -8,8 +8,6 @@ from rest_framework import mixins, viewsets, status, filters
 from rest_framework.pagination import LimitOffsetPagination
 
 from reviews.models import Category, Genre, Title, Review, User
-
-
 from .serializers import (CategorySerializer, GenreSerializer, TitleReadSerializer,
                           TitleWriteSerializer, CommentSerializer,
                           ReviewSerializer, UserSerializer,
