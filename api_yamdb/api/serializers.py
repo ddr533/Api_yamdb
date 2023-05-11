@@ -1,7 +1,7 @@
 """Сериализаторы для моделей."""
 
 import datetime as dt
-
+import re
 from rest_framework import serializers
 
 from reviews.models import (Category, Genre, GenreTitle, Title,
@@ -9,12 +9,17 @@ from reviews.models import (Category, Genre, GenreTitle, Title,
 
 
 class SignUpSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField()
+    email = serializers.EmailField(max_length=254)
     username = serializers.CharField(max_length=50)
     class Meta:
        fields = ['email', 'username'] 
        model = User
 
+    def validate_username(self, value):
+        pattern = r'^[\w.@+-]+$'
+        if not re.match(pattern, value):
+            raise serializers.ValidationError('Неверный формат username')
+        return value
       
 class TokenSerializer(serializers.ModelSerializer):
     username = serializers.CharField(max_length=50)
