@@ -2,9 +2,9 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from review.models import (User, Genre, Category, Title,
+from reviews.models import (User, Genre, Category, Title,
                            Review, Comment, GenreTitle)
-
+from api_yamdb.settings import EMAIL_HOST_USER
 
 class TestMyAPI(APITestCase):
     """Тестирование ресурса Отзывы (Review)."""

@@ -23,11 +23,10 @@ router.register(
 router.register(
     r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
     CommentViewSet, basename='comments')
-router.register(r"users", UserViewSet, basename="user")
+router.register(r'users', UserViewSet, basename='user',)
 
 urlpatterns = [
-    # path('v1/auth/signup/', TokenObtainPairView.as_view(), 
-    #      name='token_obtain_pair'),
+
     path('v1/auth/signup/', signup, 
           name='signup'),
     path('v1/auth/token/', token, 
@@ -36,5 +35,5 @@ urlpatterns = [
          UserViewSet.as_view({'get': 'retrieve'}), 
          name='user-detail'),
     path('v1/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
-    path('v1/', include(router.urls)),
+    path('v1/', include(router.urls), name='user'),
 ]
