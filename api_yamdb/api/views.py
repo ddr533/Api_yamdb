@@ -9,19 +9,19 @@ from rest_framework.pagination import LimitOffsetPagination
 from reviews.models import Category, Genre, Title, Review, User
 from .serializers import (CategorySerializer, GenreSerializer, TitleReadSerializer,
                           TitleWriteSerializer, CommentSerializer,
-                          ReviewSerializer, UserSerializer,
+                          ReviewSerializer, UserSerializer, UserMeSerializer,
                           SignUpSerializer, TokenSerializer)
 
 from .filters import TitleFilter
 from rest_framework.decorators import api_view, permission_classes, action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 from django.utils.crypto import get_random_string
-from api_yamdb.settings import EMAIL_HOST_USER
+from api_yamdb import EMAIL_HOST_USER
 from django.core.mail import send_mail
-from .permissions import (CastomAdminSuperUser, UserUpdateRole, 
-                          IsAuthorOrStaffOrReadOnly, AdminOrReadOnly)
+from .permissions import (IsAuthorOrStaffOrReadOnly, AdminOrReadOnly,
+                          UserPermissions)
 
 
 @api_view(['POST'])
@@ -82,54 +82,11 @@ def token(request):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = (UserPermissions,)
     lookup_field = 'username'
+    filter_backends = (filters.SearchFilter, )
+    search_fields = ('username',)
 
-    def get_permissions(self):
-        if self.action == 'user_creat':
-            permission_classes = [CastomAdminSuperUser]
-        if self.action == 'user_list':
-            permission_classes = [CastomAdminSuperUser]
-        if self.action == 'user_destroy':
-            permission_classes = [CastomAdminSuperUser]
-        if self.action == 'user_retrieve':
-            permission_classes = [CastomAdminSuperUser]
-        if self.action == 'patch_me_user':
-            permission_classes = [UserUpdateRole]
-        else:
-            permission_classes = self.permission_classes
-        return [permission() for permission in permission_classes]
-
-    def user_list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
- 
-    def user_create(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        if request.data.get('username') == 'me':
-            raise AssertionError()
-        user = serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    def user_retrieve(self, request, username):
-        user = get_object_or_404(self.queryset, username=username)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
-    
-    def user_destroy(self, request, username):
-        instance = User.objects.get(username=username)
-        instance.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    
-    def user_patch(self, request, username=None):
-        user = self.get_object()
-        serializer = self.get_serializer(user, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
     @action(detail=False, methods=['get'], url_path='me')
     def me_user(self, request):
         serializer = UserSerializer(request.user)
@@ -137,7 +94,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @me_user.mapping.patch
     def patch_me_user(self, request):
-        serializer = self.get_serializer(request.user, data=request.data, partial=True)
+        serializer = UserMeSerializer(request.user, data=request.data,
+                                      partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
