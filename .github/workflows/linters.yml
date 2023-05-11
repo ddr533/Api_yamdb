@@ -23,11 +23,9 @@ jobs:
     - name: Run pytest
       run: |
         pytest
-      continue-on-error: true
     - name: Analysing the code with flake8
       run: |
         flake8 $(git ls-files -- "*.py" ":!:tests/*.py" ":!:**/migrations/*.py")
-      continue-on-error: true
     - name: Analysing the code with isort
       run: |
         isort --check-only .
