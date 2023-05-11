@@ -18,7 +18,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 from django.utils.crypto import get_random_string
-from api_yamdb.settings import EMAIL_HOST_USER
+from api_yamdb import EMAIL_HOST_USER
 from django.core.mail import send_mail
 from .permissions import (IsAuthorOrStaffOrReadOnly, AdminOrReadOnly,
                           UserPermissions)
