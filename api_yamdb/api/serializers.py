@@ -40,7 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = ('__all__')
+        fields = ('name', 'slug')
         model = Category
         extra_kwargs = {
             'url': {'lookup_field': 'slug'}
@@ -50,7 +50,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = ('__all__')
+        fields = ('name', 'slug')
         model = Genre
         extra_kwargs = {
             'url': {'lookup_field': 'slug'}
