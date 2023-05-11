@@ -148,4 +148,6 @@ dmypy.json
 # папки со статикой и медиа
 media/
 
+
+requests.http
 /api_yamdb/sent_emails/

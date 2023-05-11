@@ -57,7 +57,7 @@ class GenreSerializer(serializers.ModelSerializer):
         }
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleWriteSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         many=True,
         queryset=Genre.objects.all(),
@@ -76,19 +76,14 @@ class TitleSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Проверьте год выпуска!')
         return value
 
-    def create(self, validated_data):
-        genres = validated_data.pop('genre')
-        category = validated_data['category']
 
-        try:
-            Category.objects.get(name=category)
-            title = Title.objects.create(**validated_data)
-            for genre in genres:
-                current_genre = Genre.objects.get(name=genre)
-                GenreTitle.objects.create(genre=current_genre, title=title)
-        except Exception:
-            raise Exception('Такой записи в базе пока нет')
-        return title
+class TitleReadSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(read_only=True, many=True)
+    category = CategorySerializer(read_only=True)
+
+    class Meta:
+        fields = ('__all__')
+        model = Title
 
 
 class ReviewSerializer(serializers.ModelSerializer):
