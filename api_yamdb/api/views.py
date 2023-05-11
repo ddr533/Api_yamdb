@@ -5,6 +5,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, viewsets, status
 from rest_framework.exceptions import ValidationError
+from rest_framework import mixins, viewsets, status, filters
+from rest_framework.pagination import LimitOffsetPagination
 
 from reviews.models import Category, Genre, Title, Review, User
 
@@ -16,6 +18,8 @@ from .serializers import (CategorySerializer, GenreSerializer, TitleReadSerializ
                           SignUpSerializer, TokenSerializer)
 
 from .permissions import IsAuthorOrStaffOrReadOnly, AdminOrReadOnly
+from .filters import TitleFilter
+from .permissions import AdminOrReadOnly
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -125,10 +129,10 @@ class CreateListDestroyViewSet(mixins.CreateModelMixin,
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    pagination_class = DefaultPagination
+    pagination_class = LimitOffsetPagination
     permission_classes = (AdminOrReadOnly, )
     filter_backends = (DjangoFilterBackend,)
-
+    filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -140,16 +144,20 @@ class GenreViewSet(CreateListDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (AdminOrReadOnly, )
+    filter_backends = (filters.SearchFilter, )
     lookup_field = 'slug'
-    pagination_class = DefaultPagination
+    pagination_class = LimitOffsetPagination
+    search_fields = ('name',)
 
 
 class CategoryViewSet(CreateListDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (AdminOrReadOnly, )
+    filter_backends = (filters.SearchFilter, )
     lookup_field = 'slug'
-    pagination_class = DefaultPagination
+    pagination_class = LimitOffsetPagination
+    search_fields = ('name',)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
