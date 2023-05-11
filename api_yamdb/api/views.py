@@ -33,21 +33,27 @@ def signup(request):
         username = serializer.validated_data['username']
 
         if username == 'me':
-            raise AssertionError()
+            return Response('Нельзя регистрироваться заново',
+                            status=status.HTTP_400_BAD_REQUEST)
         
         confirmation_code = get_random_string(length=12)
-        send_mail(
-            'Confirmation code',
-            f'Your confirmation code is: {confirmation_code}',
-            EMAIL_HOST_USER,
-            [email],
-            fail_silently=False,
-        )
-        user, created = User.objects.get_or_create(email=email, username=username)
-        user.confirmation_code = confirmation_code
-        user.save()
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        try:
+            user, created = User.objects.get_or_create(email=email,
+                                                       username=username)
+            user.confirmation_code = confirmation_code
+            user.save()
+            send_mail(
+                'Confirmation code',
+                f'Your confirmation code is: {confirmation_code}',
+                EMAIL_HOST_USER,
+                [email],
+                fail_silently=False,
+            )
+        except IntegrityError as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -59,16 +65,16 @@ def token(request):
     if serializer.is_valid():
         username = serializer.validated_data['username']
         confirmation_code = serializer.validated_data['confirmation_code']
-        try:
-            user = User.objects.get(username=username, confirmation_code=confirmation_code)
+        user = get_object_or_404(User, username=username)
+        valid_confirmation_code = user.confirmation_code
+        if valid_confirmation_code != confirmation_code:
+            return Response({'error': 'Invalid username or confirmation code.'},
+                                             status=status.HTTP_400_BAD_REQUEST)
+        user.confirmation_code = ''
+        user.save()
+        token = AccessToken.for_user(user)
+        return Response({'token': str(token)}, status=status.HTTP_200_OK)
 
-            user.confirmation_code = ''
-            user.save()
-            token = AccessToken.for_user(user)
-            return Response({'token': str(token)}, status=status.HTTP_200_OK)
-        except User.DoesNotExist:
-            return Response({'error': 'Invalid username or confirmation code.'}, 
-                            status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

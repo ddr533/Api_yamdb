@@ -16,9 +16,11 @@ class User(AbstractUser):
     role = models.CharField(choices=ROLE_CHOICES, default='user',
                              max_length=30)
     confirmation_code = models.CharField(max_length=12, null=True, blank=True)
+    email = models.EmailField(unique=True)
 
     def __str__(self):
         return self.get_full_name() or self.username
+
 
       
 class Category(models.Model):
