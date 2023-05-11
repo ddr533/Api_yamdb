@@ -59,7 +59,7 @@ class Title(models.Model):
 class GenreTitle(models.Model):
     """Таблица отношений (многие-ко-многим) жанров и произведений."""
     
-    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    genre = models.ForeignKey(Genre, related_name='genre', on_delete=models.CASCADE)
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -69,7 +69,7 @@ class GenreTitle(models.Model):
 class Review(models.Model):
     """Модель отзывов на произведения."""
 
-    title_id = models.ForeignKey(
+    title = models.ForeignKey(
         to=Title,
         on_delete=models.CASCADE,
         related_name='reviews'
@@ -96,8 +96,8 @@ class Review(models.Model):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         constraints = [
-            UniqueConstraint(fields=('title_id', 'author'),
-                             name='unique_title_id_and_author')
+            UniqueConstraint(fields=('title', 'author'),
+                             name='unique_title_and_author')
         ]
 
     def __str__(self):
@@ -107,7 +107,7 @@ class Review(models.Model):
 class Comment(models.Model):
     """Модель комментариев к отзывам."""
 
-    review_id = models.ForeignKey(
+    review = models.ForeignKey(
         to='Review',
         on_delete=models.CASCADE,
         related_name='comments',
@@ -127,6 +127,7 @@ class Comment(models.Model):
     )
 
     class Meta:
+        ordering = ('-pub_date', '-id')
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
