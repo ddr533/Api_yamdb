@@ -7,6 +7,8 @@ from rest_framework import mixins, viewsets, status
 from rest_framework.exceptions import ValidationError
 
 from reviews.models import Category, Genre, Title, Review, User
+
+
 from .pagination import DefaultPagination
 from .serializers import (CategorySerializer, GenreSerializer, TitleReadSerializer, 
                           TitleWriteSerializer, CommentSerializer,
@@ -126,7 +128,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     pagination_class = DefaultPagination
     permission_classes = (AdminOrReadOnly, )
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category', 'genre', 'name', 'year')
+
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):

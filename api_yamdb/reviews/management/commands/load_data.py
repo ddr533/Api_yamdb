@@ -13,6 +13,7 @@ python manage.py load_data Genre static/data/genre.csv
 python manage.py load_data Title static/data/titles.csv
 python manage.py load_data Review static/data/review.csv
 python manage.py load_data Comment static/data/comments.csv
+python manage.py load_data GenreTitle static/data/genre_title.csv
 """
 
 import csv
