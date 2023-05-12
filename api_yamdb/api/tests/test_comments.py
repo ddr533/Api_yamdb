@@ -1,7 +1,7 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
-from reviews.models import Category, Genre, Review, Title, User
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class TestMyAPI(APITestCase):
@@ -49,6 +49,11 @@ class TestMyAPI(APITestCase):
             text='review',
             score=8
         )
+        cls.comment = Comment.objects.create(
+            review=cls.review,
+            author=cls.user,
+            text='comment',
+        )
 
     def setUp(self):
         self.user_client = APIClient()
@@ -59,14 +64,17 @@ class TestMyAPI(APITestCase):
         self.moderator_client.force_authenticate(self.moderator)
         self.user_client.force_authenticate(self.user)
 
-    def test_anon_user_access_to_review(self):
+    def test_anon_user_access_to_comments(self):
         """Анонимный пользователь может получать данные из GET запроса."""
         urls = (
-            (reverse('api:reviews-list',
-                     kwargs={'title_id': self.title.id}),
+            (reverse('api:comments-list',
+                     kwargs={'title_id': self.title.id,
+                             'review_id': self.review.id}),
              status.HTTP_200_OK),
-            (reverse('api:reviews-detail',
-                     kwargs={'title_id': self.title.id, 'pk': self.review.id}),
+            (reverse('api:comments-detail',
+                     kwargs={'title_id': self.title.id,
+                             'review_id': self.review.id,
+                             'pk': self.comment.id}),
              status.HTTP_200_OK)
         )
 
@@ -76,15 +84,19 @@ class TestMyAPI(APITestCase):
                 self.assertEqual(response.status_code,
                                  expected_status_code)
 
-    def test_auth_user_access_to_review(self):
+    def test_auth_user_access_to_comments(self):
         """Авторизованный пользователь может получать данные из GET запроса."""
         urls = (
-            (reverse('api:reviews-list',
-                     kwargs={'title_id': self.title.id}),
+            (reverse('api:comments-list',
+                     kwargs={'title_id': self.title.id,
+                             'review_id': self.review.id}),
              status.HTTP_200_OK),
-            (reverse('api:reviews-detail',
-                     kwargs={'title_id': self.title.id, 'pk': self.review.id}),
-             status.HTTP_200_OK))
+            (reverse('api:comments-detail',
+                     kwargs={'title_id': self.title.id,
+                             'review_id': self.review.id,
+                             'pk': self.comment.id}),
+             status.HTTP_200_OK)
+        )
 
         for url, expected_status_code in urls:
             with self.subTest(url=url, status_code=expected_status_code):
@@ -92,31 +104,28 @@ class TestMyAPI(APITestCase):
                 self.assertEqual(response.status_code,
                                  expected_status_code)
 
-    def test_anon_user_cant_post_review(self):
-        """Создать отзыв может только авторизованный пользователь."""
+    def test_anon_user_cant_post_comments(self):
+        """Комметировать может только авторизованный пользователь."""
         data = {
-            'title': self.title,
-            'score': 10,
-            'text': 'test',
+            'review': self.review,
+            'text': 'comment_1',
         }
-        response = self.anon_client.post(
-            reverse('api:reviews-list', kwargs={'title_id': self.title.id}),
-            data=data)
+        url = reverse('api:comments-list', kwargs={
+            'title_id': self.title.id,
+            'review_id': self.review.id})
+        response = self.anon_client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-        response = self.moderator_client.post(
-            reverse('api:reviews-list', kwargs={'title_id': self.title.id}),
-            data=data)
+        response = self.moderator_client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_edit_request_for_review(self):
-        """Изменять отзыв может только автор, администратор и админ."""
-        url = reverse('api:reviews-detail',
-                      kwargs={'title_id': 1, 'pk': self.review.id})
-        data = {
-            'score': 1,
-            'text': 'test_1',
-        }
+    def test_edit_comments_for_post(self):
+        """Изменять комментрий может только автор, администратор и админ."""
+        url = reverse('api:comments-detail',
+                      kwargs={'title_id': self.title.id,
+                              'review_id': self.review.id,
+                              'pk': self.comment.id})
+        data = {'text': 'update_comment_1'}
         new_user = User.objects.create_user(
             username='new_user',
             password='password',
@@ -144,31 +153,20 @@ class TestMyAPI(APITestCase):
         response = self.user_client.delete(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    def test_moderator_can_del_review(self):
-        """Модератор может удалить отзыв."""
-        response = self.moderator_client.delete(
-            reverse('api:reviews-detail',
-                    kwargs={'title_id': 1, 'pk': self.review.id}))
+    def test_moderator_can_del_comment(self):
+        """Модератор может удалить комментарий."""
+        url = reverse('api:comments-detail',
+                      kwargs={'title_id': self.title.id,
+                              'review_id': self.review.id,
+                              'pk': self.comment.id})
+        response = self.moderator_client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    def test_admin_can_del_review(self):
-        """Админ может удалить отзыв."""
-        response = self.admin_client.delete(
-            reverse('api:reviews-detail',
-                    kwargs={'title_id': 1, 'pk': self.review.id}))
+    def test_admin_can_del_comment(self):
+        """Админ может удалить комментарий."""
+        url = reverse('api:comments-detail',
+                      kwargs={'title_id': self.title.id,
+                              'review_id': self.review.id,
+                              'pk': self.comment.id})
+        response = self.admin_client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-    def test_update_review_rating(self):
-        """После публикации нового отзыва у произведения меняется рейтинг."""
-        url_title = reverse('api:titles-detail', kwargs={'pk': self.title.id})
-
-        response = self.user_client.get(url_title)
-        Review.objects.create(
-            title=self.title,
-            author=self.moderator,
-            text='review_1',
-            score=2
-        )
-        response = self.user_client.get(url_title)
-        new_title_rating = response.json()['rating']
-        self.assertEqual(new_title_rating, 5)
