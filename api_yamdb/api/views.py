@@ -21,7 +21,7 @@ from django.utils.crypto import get_random_string
 from api_yamdb.settings import EMAIL_HOST_USER
 from django.core.mail import send_mail
 from .permissions import (IsAuthorOrStaffOrReadOnly, AdminOrReadOnly,
-                          UserPermissions)
+                          UserPermissions, UserMePermissions)
 
 
 @api_view(['POST'])
@@ -86,8 +86,10 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
+    http_method_names = ['get', 'post', 'delete', 'patch']
 
-    @action(detail=False, methods=['get'], url_path='me')
+    @action(detail=False, methods=['get'], url_path='me',
+            permission_classes=[UserMePermissions])
     def me_user(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
