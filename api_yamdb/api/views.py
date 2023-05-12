@@ -1,27 +1,28 @@
 """Обработчики для представлений."""
 
+from django.core.mail import send_mail
 from django.db import IntegrityError
-from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from rest_framework import mixins, viewsets, status, filters
+from django.utils.crypto import get_random_string
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, status, viewsets, generics
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
-from reviews.models import Category, Genre, Title, Review, User
-from .serializers import (CategorySerializer, GenreSerializer, TitleReadSerializer,
-                          TitleWriteSerializer, CommentSerializer,
-                          ReviewSerializer, UserSerializer, UserMeSerializer,
-                          SignUpSerializer, TokenSerializer)
-
-from .filters import TitleFilter
-from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-from django.utils.crypto import get_random_string
+from reviews.models import Category, Genre, Review, Title, User
+
 from api_yamdb.settings import EMAIL_HOST_USER
-from django.core.mail import send_mail
-from .permissions import (IsAuthorOrStaffOrReadOnly, AdminOrReadOnly,
-                          UserPermissions, UserMePermissions)
+
+from .filters import TitleFilter
+from .permissions import (AdminOrReadOnly, IsAuthorOrStaffOrReadOnly,
+                          UserMePermissions, UserPermissions)
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer, SignUpSerializer,
+                          TitleReadSerializer, TitleWriteSerializer,
+                          TokenSerializer, UserMeSerializer, UserSerializer)
 
 
 @api_view(['POST'])
@@ -35,7 +36,7 @@ def signup(request):
         if username == 'me':
             return Response('Нельзя регистрироваться заново',
                             status=status.HTTP_400_BAD_REQUEST)
-        
+
         confirmation_code = get_random_string(length=12)
 
         try:
@@ -101,7 +102,7 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
 
 class CreateListDestroyViewSet(mixins.CreateModelMixin,
                                mixins.ListModelMixin,

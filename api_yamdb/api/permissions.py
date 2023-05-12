@@ -35,9 +35,8 @@ class IsAuthorOrStaffOrReadOnly(permissions.IsAuthenticatedOrReadOnly):
     message = 'Изменять контент может только его автор, модератор или админ.'
 
     ALLOW_EDIT = ('moderator', 'admin')
-    
-    def has_object_permission(self, request, view, obj):
 
+    def has_object_permission(self, request, view, obj):
         return any((request.method in permissions.SAFE_METHODS,
                     request.user == obj.author,
                     request.user.is_superuser,
@@ -61,4 +60,3 @@ class AdminOrReadOnly(permissions.BasePermission):
                     request.user.is_superuser,
                     request.user.is_authenticated and
                     request.user.role == 'admin'))
-

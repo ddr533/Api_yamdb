@@ -3,8 +3,7 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
-
-from reviews.models import User, Genre, Category, Title, Review
+from reviews.models import Category, Genre, Review, Title, User
 
 
 class TestMyAPI(APITestCase):

@@ -24,8 +24,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 from django.db.models import Model
 from django.shortcuts import get_object_or_404
-from reviews.models import (Review, Comment, User, Title,
-                            Category, Genre, GenreTitle)
+from reviews.models import (Category, Comment, Genre, GenreTitle, Review,
+                            Title, User)
 
 
 class Command(BaseCommand):
