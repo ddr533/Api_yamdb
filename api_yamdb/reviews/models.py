@@ -8,13 +8,13 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     ROLE_CHOICES = [
-        ('user', 'Аутентифицированный пользователь'), 
-        ('moderator', 'Модератор'), 
+        ('user', 'Аутентифицированный пользователь'),
+        ('moderator', 'Модератор'),
         ('admin', 'Администратор'),
     ]
     bio = models.TextField(null=True, blank=True)
     role = models.CharField(choices=ROLE_CHOICES, default='user',
-                             max_length=30)
+                            max_length=30)
     confirmation_code = models.CharField(max_length=12, null=True, blank=True)
     email = models.EmailField(unique=True)
 
@@ -22,10 +22,9 @@ class User(AbstractUser):
         return self.get_full_name() or self.username
 
 
-      
 class Category(models.Model):
     """Категории (типы) произведений."""
-    
+
     name = models.CharField(max_length=256)
     slug = models.SlugField(max_length=50, unique=True)
 
@@ -35,7 +34,7 @@ class Category(models.Model):
 
 class Genre(models.Model):
     """Жанры произведений."""
-    
+
     name = models.CharField(max_length=256)
     slug = models.SlugField(max_length=50, unique=True)
 
@@ -45,7 +44,7 @@ class Genre(models.Model):
 
 class Title(models.Model):
     """Произведения в базе данных."""
-    
+
     name = models.CharField(max_length=256)
     year = models.IntegerField()
     description = models.TextField(null=True, blank=True)
@@ -60,8 +59,9 @@ class Title(models.Model):
 
 class GenreTitle(models.Model):
     """Таблица отношений (многие-ко-многим) жанров и произведений."""
-    
-    genre = models.ForeignKey(Genre, related_name='genre', on_delete=models.CASCADE)
+
+    genre = models.ForeignKey(Genre, related_name='genre',
+                              on_delete=models.CASCADE)
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
     def __str__(self):

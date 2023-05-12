@@ -1,5 +1,6 @@
+"""Права доступа к ресурсам."""
+
 from rest_framework import permissions
-from rest_framework.exceptions import MethodNotAllowed
 
 
 class UserPermissions(permissions.IsAdminUser):
