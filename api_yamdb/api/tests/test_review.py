@@ -162,7 +162,7 @@ class TestMyAPI(APITestCase):
 
     def test_update_review_rating(self):
         """После публикации нового отзыва у произведения меняется рейтинг."""
-        url_title = reverse('api:title-detail', kwargs={'pk': self.title.id})
+        url_title = reverse('api:titles-detail', kwargs={'pk': self.title.id})
 
         response = self.user_client.get(url_title)
         Review.objects.create(

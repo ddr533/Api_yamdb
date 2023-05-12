@@ -4,15 +4,17 @@ from django.urls import include, path
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenVerifyView
 
-from .views import (CategoryViewSet, CommentViewSet, GenreViewSet,
-                    ReviewViewSet, TitleViewSet, UserViewSet, signup, token)
+from .views import (CategoryViewSet, GenreViewSet, TitleViewSet,
+                    CommentViewSet,
+                    ReviewViewSet, UserViewSet, signup, token)
+
 
 app_name = 'api'
 
 router = routers.DefaultRouter()
-router.register(r'categories', CategoryViewSet)
-router.register(r'genres', GenreViewSet)
-router.register(r'titles', TitleViewSet)
+router.register(r'categories', CategoryViewSet, basename='categories')
+router.register(r'genres', GenreViewSet, basename='genres')
+router.register(r'titles', TitleViewSet, basename='titles')
 router.register(
     r'titles/(?P<title_id>\d+)/reviews', ReviewViewSet, basename='reviews')
 router.register(
