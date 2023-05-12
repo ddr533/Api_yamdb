@@ -84,19 +84,3 @@ class TestMyAPIUser(APITestCase):
                         }
         with self.assertRaises(IntegrityError):
             User.objects.create_user(**invalid_data)
-
-    # def test_user_cant_delete_own_account(self):
-    #     """Пользователь не может удалить свой аккаунт."""
-    #     url = 'http://127.0.0.1:8000/api/v1/users/me/'
-    #     with self.assertRaises(PermissionDenied):
-    #         self.user_client.delete(url)
-            
-        # self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-        # self.assertEqual(response.data, {'detail': 'Нет разрешения на выполнение этого действия.'})
-
-    # def test_user_cant_delete_other_users_account(self):
-    #     """Пользователь не может удалить чужой аккаунт."""
-    #     url = reverse('api:user-detail', args=[self.admin.username])
-    #     response = self.user_client.delete(url)
-    #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-    #     self.assertEqual(response.data, {'detail': 'Нет разрешения на выполнение этого действия.'})
