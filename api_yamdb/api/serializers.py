@@ -13,8 +13,8 @@ class SignUpSerializer(serializers.ModelSerializer):
     username = serializers.CharField(max_length=50)
 
     class Meta:
-       fields = ['email', 'username']
-       model = User
+        fields = ['email', 'username']
+        model = User
 
     def validate_username(self, value):
         pattern = r'^[\w.@+-]+$'
@@ -22,12 +22,14 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Неверный формат username')
         return value
 
+
 class TokenSerializer(serializers.ModelSerializer):
     username = serializers.CharField(max_length=50)
     confirmation_code = serializers.CharField(max_length=12)
+
     class Meta:
-       fields = ['username', 'confirmation_code']
-       model = User
+        fields = ['username', 'confirmation_code']
+        model = User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -39,13 +41,13 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name',
             'bio',
             'role'
-            ]
+        ]
         model = User
+
     def validate_username(self, value):
         if value == 'me':
             raise serializers.ValidationError('Имя me запрещено!')
         return value
-
 
 
 class UserMeSerializer(serializers.ModelSerializer):
@@ -57,7 +59,7 @@ class UserMeSerializer(serializers.ModelSerializer):
             'last_name',
             'bio',
             'role'
-            ]
+        ]
         model = User
         read_only_fields = ['role']
 
@@ -121,9 +123,10 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     author = serializers.SlugRelatedField(slug_field='username',
                                           read_only=True)
+
     class Meta:
         model = Review
-        fields = ('id', 'text', 'author', 'score', 'pub_date' )
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -131,6 +134,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     author = serializers.SlugRelatedField(slug_field='username',
                                           read_only=True)
+
     class Meta:
         model = Comment
-        fields = ('id', 'text', 'author', 'pub_date' )
+        fields = ('id', 'text', 'author', 'pub_date')

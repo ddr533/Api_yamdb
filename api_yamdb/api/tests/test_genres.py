@@ -1,7 +1,6 @@
 from django.urls import reverse
 from rest_framework.test import APIClient, APITestCase
-
-from reviews.models import User, Genre
+from reviews.models import Genre, User
 
 
 class TestMyAPI(APITestCase):

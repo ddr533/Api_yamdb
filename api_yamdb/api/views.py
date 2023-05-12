@@ -5,7 +5,7 @@ from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, status, viewsets, generics
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
@@ -13,7 +13,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, Genre, Review, Title, User
+
 from api_yamdb.settings import EMAIL_HOST_USER
+
 from .filters import TitleFilter
 from .permissions import (AdminOrReadOnly, IsAuthorOrStaffOrReadOnly,
                           UserMePermissions, UserPermissions)
@@ -21,7 +23,6 @@ from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer, SignUpSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
                           TokenSerializer, UserMeSerializer, UserSerializer)
-
 
 
 @api_view(['POST'])
@@ -68,8 +69,9 @@ def token(request):
         user = get_object_or_404(User, username=username)
         valid_confirmation_code = user.confirmation_code
         if valid_confirmation_code != confirmation_code:
-            return Response({'error': 'Invalid username or confirmation code.'},
-                                             status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                'error': 'Invalid username or confirmation code.'},
+                status=status.HTTP_400_BAD_REQUEST)
         user.confirmation_code = ''
         user.save()
         token = AccessToken.for_user(user)
@@ -157,7 +159,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
         except IntegrityError as e:
             raise ValidationError(
                 f'Отзыв можно оставлять только один раз, {e}')
-
 
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
