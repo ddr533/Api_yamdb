@@ -24,12 +24,12 @@ router.register(r'users', UserViewSet, basename='user')
 
 urlpatterns = [
     path('v1/auth/signup/', signup,
+
           name='signup'),
     path('v1/auth/token/', token,
           name='token'),
     path('users/<str:username>/',
          UserViewSet.as_view({'get': 'retrieve'}),
          name='user-detail'),
-    path('v1/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('v1/', include(router.urls)),
 ]

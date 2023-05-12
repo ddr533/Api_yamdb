@@ -41,7 +41,12 @@ class UserSerializer(serializers.ModelSerializer):
             'role'
             ]
         model = User
-
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError('Имя me запрещено!')
+        return value
+    
+   
 
 class UserMeSerializer(serializers.ModelSerializer):
     class Meta:

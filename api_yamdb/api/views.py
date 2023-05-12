@@ -13,9 +13,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, Genre, Review, Title, User
-
 from api_yamdb.settings import EMAIL_HOST_USER
-
 from .filters import TitleFilter
 from .permissions import (AdminOrReadOnly, IsAuthorOrStaffOrReadOnly,
                           UserMePermissions, UserPermissions)
@@ -23,6 +21,7 @@ from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer, SignUpSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
                           TokenSerializer, UserMeSerializer, UserSerializer)
+
 
 
 @api_view(['POST'])
