@@ -96,14 +96,7 @@ class TitleViewSet(viewsets.ModelViewSet):
             return TitleReadSerializer
         return TitleWriteSerializer
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        if self.get_serializer_class() == TitleReadSerializer:
-            context['rating'] = 122
-        return context
-
     def get_queryset(self):
-        print(self.kwargs)
         queryset = Title.objects.all()
         if self.get_serializer_class() == TitleReadSerializer:
             queryset = queryset.annotate(rating=Avg('reviews__score'))
