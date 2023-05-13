@@ -24,8 +24,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 from django.db.models import Model
 from django.shortcuts import get_object_or_404
-from reviews.models import (Review, Comment, User, Title,
-                            Category, Genre, GenreTitle)
+from reviews.models import (Category, Comment, Genre, GenreTitle, Review,
+                            Title, User)
 
 
 class Command(BaseCommand):
@@ -50,7 +50,7 @@ class Command(BaseCommand):
                                           model_name=model_name)
         except LookupError:
             raise CommandError(f'Model {model_name} not found')
-        
+
         objects_list: list = self.__create_objects_list_from_file(
             model, file_path)
 
@@ -63,7 +63,7 @@ class Command(BaseCommand):
         finally:
             sys.stdout.write(
                 self.style.NOTICE(f'Данные из файла {file_path} обработаны.'))
-        
+
     def __create_objects_list_from_file(self, model: Model,
                                         file_path: str) -> list:
         """Формирует список из объектов переданной
@@ -97,6 +97,5 @@ class Command(BaseCommand):
                     author = get_object_or_404(User, id=row.get('author'))
                     row['author'] = author
                 objects_list.append(model.objects.create(**row))
-                
+
         return objects_list
-    

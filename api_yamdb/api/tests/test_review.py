@@ -1,9 +1,7 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
-
-from reviews.models import (User, Genre, Category, Title,
-                           Review, Comment, GenreTitle)
+from reviews.models import Category, Genre, Review, Title, User
 
 
 class TestMyAPI(APITestCase):
@@ -45,13 +43,12 @@ class TestMyAPI(APITestCase):
 
         cls.title.genre.set([cls.genre])
 
-
         cls.review = Review.objects.create(
             title=cls.title,
-            author= cls.user,
+            author=cls.user,
             text='review',
             score=8
-            )
+        )
 
     def setUp(self):
         self.user_client = APIClient()
@@ -61,7 +58,6 @@ class TestMyAPI(APITestCase):
         self.admin_client.force_authenticate(self.admin)
         self.moderator_client.force_authenticate(self.moderator)
         self.user_client.force_authenticate(self.user)
-
 
     def test_anon_user_access_to_review(self):
         """Анонимный пользователь может получать данные из GET запроса."""
@@ -115,11 +111,10 @@ class TestMyAPI(APITestCase):
             data=data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-
     def test_edit_request_for_post(self):
         """Изменять отзыв может только автор, администратор и админ."""
         url = reverse('api:reviews-detail',
-                    kwargs={'title_id': 1, 'pk': self.review.id})
+                      kwargs={'title_id': 1, 'pk': self.review.id})
         data = {
             'score': 1,
             'text': 'test_1',
@@ -153,12 +148,14 @@ class TestMyAPI(APITestCase):
 
     def test_moderator_can_del_review(self):
         """Модератор может удалить отзыв."""
-        response = self.moderator_client.delete(reverse('api:reviews-detail',
+        response = self.moderator_client.delete(
+            reverse('api:reviews-detail',
                     kwargs={'title_id': 1, 'pk': self.review.id}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_admin_can_del_review(self):
         """Админ может удалить отзыв."""
-        response = self.admin_client.delete(reverse('api:reviews-detail',
+        response = self.admin_client.delete(
+            reverse('api:reviews-detail',
                     kwargs={'title_id': 1, 'pk': self.review.id}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
