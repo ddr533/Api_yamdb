@@ -25,7 +25,7 @@ class SignUpSerializer(serializers.ModelSerializer):
         pattern = r'^[\w.@+-]+$'
         email = data.get('email')
         username = data.get('username')
-
+        data = super().validate(data)
         if (not User.objects.filter(email=email, username=username).exists()
             and any((User.objects.filter(email=email).exists(),
                      User.objects.filter(username=username).exists()))):
@@ -33,6 +33,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
         if not re.match(pattern, username) or username == 'me':
             raise serializers.ValidationError('Неверный формат username')
+
         return data
 
 
@@ -45,9 +46,11 @@ class TokenSerializer(serializers.ModelSerializer):
         model = User
 
     def validate(self, data):
+        data = super().validate(data)
         user = get_object_or_404(User, username=data['username'])
         if user.confirmation_code != data['confirmation_code']:
             raise serializers.ValidationError('Неверный код.')
+
         return data
 
 
