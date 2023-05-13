@@ -38,6 +38,7 @@ class User(AbstractUser):
         return self.get_full_name() or self.username
 
 
+
 class Category(models.Model):
     """Категории (типы) произведений."""
 
