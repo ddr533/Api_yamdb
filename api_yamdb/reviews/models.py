@@ -22,9 +22,15 @@ class User(AbstractUser):
         (ADMIN, 'Администратор'),
     )
 
-    bio = models.TextField(null=True, blank=True)
-    role = models.CharField(choices=ROLE_CHOICES, default=USER, max_length=30)
-    confirmation_code = models.CharField(max_length=12, null=True, blank=True)
+    bio = models.TextField(null=True, blank=True, verbose_name='Биография')
+    role = models.CharField(choices=ROLE_CHOICES,
+                            default=USER,
+                            max_length=30,
+                            verbose_name='Роль')
+    confirmation_code = models.CharField(max_length=12,
+                                         null=True,
+                                         blank=True,
+                                         verbose_name='Код подтверждения')
     email = models.EmailField(unique=True)
 
     @property
@@ -32,6 +38,7 @@ class User(AbstractUser):
         return self.role == self.ADMIN or self.is_superuser
 
     class Meta:
+        verbose_name = 'Пользователи'
         ordering = ('id', 'username')
 
     def __str__(self):
@@ -41,10 +48,11 @@ class User(AbstractUser):
 class Category(models.Model):
     """Категории (типы) произведений."""
 
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(max_length=50, unique=True)
+    name = models.CharField(max_length=256, verbose_name='Категория')
+    slug = models.SlugField(max_length=50, unique=True, verbose_name='Слаг')
 
     class Meta:
+        verbose_name = 'Категории'
         ordering = ('name',)
 
     def __str__(self) -> str:
@@ -54,10 +62,11 @@ class Category(models.Model):
 class Genre(models.Model):
     """Жанры произведений."""
 
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(max_length=50, unique=True)
+    name = models.CharField(max_length=256, verbose_name='Жанр')
+    slug = models.SlugField(max_length=50, unique=True, verbose_name='Слаг')
 
     class Meta:
+        verbose_name = 'Жанры'
         ordering = ('name',)
 
     def __str__(self) -> str:
@@ -67,15 +76,18 @@ class Genre(models.Model):
 class Title(models.Model):
     """Произведения в базе данных."""
 
-    name = models.CharField(max_length=256)
-    year = models.PositiveSmallIntegerField()
-    description = models.TextField(null=True, blank=True)
-    genre = models.ManyToManyField(Genre, through='GenreTitle')
+    name = models.CharField(max_length=256, verbose_name='Название')
+    year = models.PositiveSmallIntegerField(verbose_name='Год', db_index=True)
+    description = models.TextField(null=True, blank=True,
+                                   verbose_name='Описание')
+    genre = models.ManyToManyField(Genre, through='GenreTitle',
+                                   verbose_name='Жанр')
     category = models.ForeignKey(
         Category, related_name='titles', on_delete=models.SET_NULL,
-        null=True)
+        null=True, verbose_name='Категория')
 
     class Meta:
+        verbose_name = 'Произведение'
         ordering = ('name', 'year')
 
     def __str__(self):
@@ -86,8 +98,9 @@ class GenreTitle(models.Model):
     """Таблица отношений (многие-ко-многим) жанров и произведений."""
 
     genre = models.ForeignKey(Genre, related_name='genre',
-                              on_delete=models.CASCADE)
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+                              on_delete=models.CASCADE, verbose_name='Жанр')
+    title = models.ForeignKey(Title, on_delete=models.CASCADE,
+                              verbose_name='Произведение')
 
     class Meta:
         ordering = ('title',)
@@ -102,7 +115,8 @@ class Review(models.Model):
     title = models.ForeignKey(
         to=Title,
         on_delete=models.CASCADE,
-        related_name='reviews'
+        related_name='reviews',
+        verbose_name='Произведение'
     )
     text = models.TextField(
         verbose_name='Текст отзыва',
@@ -110,11 +124,14 @@ class Review(models.Model):
     )
     author = models.ForeignKey(
         to=User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
     )
     score = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(MIN_REVIEW_SCORE),
-                    MaxValueValidator(MAX_REVIEW_SCORE)])
+                    MaxValueValidator(MAX_REVIEW_SCORE)],
+        verbose_name='Оценка'
+    )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
         auto_now_add=True,
@@ -145,7 +162,8 @@ class Comment(models.Model):
     )
     author = models.ForeignKey(
         to=User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
     )
     text = models.TextField(
         max_length=500,
