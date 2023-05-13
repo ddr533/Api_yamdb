@@ -1,9 +1,10 @@
+"""Права доступа к ресурсам."""
+
 from rest_framework import permissions
-from rest_framework.exceptions import MethodNotAllowed
 
 
-class UserPermissions(permissions.IsAuthenticated):
-    """Управление правами доступа к модели User."""
+class UserPermissions(permissions.IsAdminUser):
+    """Управление правами доступа к модели User - ресурсу users."""
 
     message = 'У вас недостаточно прав.'
 
@@ -21,7 +22,6 @@ class UserPermissions(permissions.IsAuthenticated):
                     and request.method != 'PATCH',
                     request.user.is_admin))
 
-
 class IsAuthorOrStaffOrReadOnly(permissions.IsAuthenticatedOrReadOnly):
     """Изменять контент может только автор, администратор, модератор."""
 
@@ -30,7 +30,6 @@ class IsAuthorOrStaffOrReadOnly(permissions.IsAuthenticatedOrReadOnly):
     ALLOW_EDIT = ('moderator', 'admin')
 
     def has_object_permission(self, request, view, obj):
-
         return any((request.method in permissions.SAFE_METHODS,
                     request.user == obj.author,
                     request.user.is_superuser,

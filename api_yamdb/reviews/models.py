@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
 
+
 MIN_REVIEW_SCORE = 1
 MAX_REVIEW_SCORE = 10
 SLICE_TEXT_FIELD = slice(0, 15)
