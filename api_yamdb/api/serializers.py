@@ -3,65 +3,80 @@
 import datetime as dt
 import re
 
-from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from reviews.models import Category, Comment, Genre, Review, Title, User
+
+MAX_USERNAME_LEN = 150
+MAX_EMAIL_LEN = 50
+MAX_CONFIRMCOD_LEN = 50
 
 
 class SignUpSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(max_length=254)
-    username = serializers.CharField(max_length=50)
+    email = serializers.EmailField(max_length=MAX_EMAIL_LEN)
+    username = serializers.CharField(max_length=MAX_USERNAME_LEN)
 
     class Meta:
-        fields = ['email', 'username']
+        fields = ('email', 'username')
         model = User
 
-    def validate_username(self, value):
+    def validate(self, data):
         pattern = r'^[\w.@+-]+$'
-        if not re.match(pattern, value) or value == 'me':
+        email = data.get('email')
+        username = data.get('username')
+
+        if (not User.objects.filter(email=email, username=username).exists()
+            and any((User.objects.filter(email=email).exists(),
+                     User.objects.filter(username=username).exists()))):
+            raise serializers.ValidationError('Это имя или почта заняты.')
+
+        if not re.match(pattern, username) or username == 'me':
             raise serializers.ValidationError('Неверный формат username')
-        return value
+        return data
 
 
 class TokenSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(max_length=50)
-    confirmation_code = serializers.CharField(max_length=12)
+    username = serializers.CharField(max_length=MAX_USERNAME_LEN)
+    confirmation_code = serializers.CharField(max_length=MAX_CONFIRMCOD_LEN)
 
     class Meta:
-        fields = ['username', 'confirmation_code']
+        fields = ('username', 'confirmation_code')
         model = User
+
+    def validate(self, data):
+        user = get_object_or_404(User, username=data['username'])
+        if user.confirmation_code != data['confirmation_code']:
+            raise serializers.ValidationError('Неверный код.')
+        return data
 
 
 class UserSerializer(serializers.ModelSerializer):
+
     class Meta:
-        fields = [
+        fields = (
             'username',
             'email',
             'first_name',
             'last_name',
             'bio',
             'role'
-        ]
+        )
         model = User
-
-    def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError('Имя me запрещено!')
-        return value
 
 
 class UserMeSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = [
+        fields = (
             'username',
             'email',
             'first_name',
             'last_name',
             'bio',
             'role'
-        ]
+        )
         model = User
-        read_only_fields = ['role']
+        read_only_fields = ('role',)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -105,17 +120,14 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(read_only=True, many=True)
-    category = CategorySerializer(read_only=True)
-    rating = serializers.SerializerMethodField()
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer()
+    rating = serializers.IntegerField()
 
     class Meta:
         fields = ('__all__')
         model = Title
-
-    def get_rating(self, obj):
-        rating = Review.objects.filter(title=obj).aggregate(res=Avg('score'))
-        return int(round(rating['res'], 0)) if rating['res'] else None
+        read_only_fields = ('genre', 'category', 'rating')
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -127,6 +139,14 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
+
+    def create(self, validated_data):
+        title = validated_data['title']
+        author = validated_data['author']
+        if Review.objects.filter(title=title, author=author).exists():
+            raise ValidationError('Отзыв можно оставлять только один раз.')
+        review = Review.objects.create(**validated_data)
+        return review
 
 
 class CommentSerializer(serializers.ModelSerializer):
