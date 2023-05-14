@@ -17,7 +17,7 @@ router.register(
 router.register(
     r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
     CommentViewSet, basename='comments')
-router.register(r"users", UserViewSet, basename="user")
+router.register(r'users', UserViewSet, basename='user')
 
 v1_auth_url = [
     path('auth/signup/', signup, name='signup'),

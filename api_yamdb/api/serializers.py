@@ -22,10 +22,10 @@ class SignUpSerializer(serializers.ModelSerializer):
         model = User
 
     def validate(self, data):
+        data = super().validate(data)
         pattern = r'^[\w.@+-]+$'
         email = data.get('email')
         username = data.get('username')
-        data = super().validate(data)
         if (not User.objects.filter(email=email, username=username).exists()
             and any((User.objects.filter(email=email).exists(),
                      User.objects.filter(username=username).exists()))):
