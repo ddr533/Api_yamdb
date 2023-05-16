@@ -7,10 +7,11 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, status, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, Genre, Title, User
 
@@ -63,13 +64,15 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
 
-    @action(detail=False, methods=['get'], url_path='me')
-    def me_user(self, request):
-        serializer = UserSerializer(request.user)
+
+class UserMeAPI(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        serializer = UserMeSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @me_user.mapping.patch
-    def patch_me_user(self, request):
+    def patch(self, request):
         serializer = UserMeSerializer(request.user, data=request.data,
                                       partial=True)
         serializer.is_valid(raise_exception=True)

@@ -2,24 +2,18 @@ from rest_framework import permissions
 from rest_framework.exceptions import MethodNotAllowed
 
 
-class UserPermissions(permissions.IsAuthenticated):
+class UserPermissions(permissions.IsAdminUser):
     """Управление правами доступа к модели User."""
 
     message = 'У вас недостаточно прав.'
 
     def has_permission(self, request, view):
-        if view.action in ('list', 'destroy'):
-            return request.user.is_authenticated and request.user.is_admin
         if request.method == 'PUT':
             raise MethodNotAllowed('PUT')
-
-        return super().has_permission(request, view)
+        return request.user.is_authenticated and request.user.is_admin
 
     def has_object_permission(self, request, view, obj):
-
-        return any((request.user.username == obj.username
-                    and request.method != 'PATCH',
-                    request.user.is_admin))
+        return request.user.is_authenticated and request.user.is_admin
 
 
 class IsAuthorOrStaffOrReadOnly(permissions.IsAuthenticatedOrReadOnly):
