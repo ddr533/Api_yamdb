@@ -24,7 +24,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 from django.db.models import Model
-
 from reviews.models import (Category, Comment, Genre, GenreTitle, Review,
                             Title, User)
 
