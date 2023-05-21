@@ -24,7 +24,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 from django.db.models import Model
-from django.shortcuts import get_object_or_404
 from reviews.models import (Category, Comment, Genre, GenreTitle, Review,
                             Title, User)
 
@@ -60,7 +59,8 @@ class Command(BaseCommand):
         except IntegrityError as e:
             sys.stdout.write(
                 self.style.WARNING(
-                    f'При записи в БД возникли исключения, проверьте БД:{e}\n'))
+                    f'При записи в БД возникли исключения,'
+                    f' проверьте БД:{e}\n'))
         finally:
             sys.stdout.write(
                 self.style.NOTICE(f'Данные из файла {file_path} обработаны.'))
