@@ -20,6 +20,7 @@ import csv
 import sys
 
 from django.apps import apps
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 from django.db.models import Model
@@ -59,7 +60,7 @@ class Command(BaseCommand):
         except IntegrityError as e:
             sys.stdout.write(
                 self.style.WARNING(
-                    f'При записи в БД возникли исключения, проверь БД:{e}\n'))
+                    f'При записи в БД возникли исключения, проверьте БД:{e}\n'))
         finally:
             sys.stdout.write(
                 self.style.NOTICE(f'Данные из файла {file_path} обработаны.'))
@@ -77,25 +78,33 @@ class Command(BaseCommand):
                         self.style.NOTICE(
                             f'Объект с id = {row["id"]} уже существует.\n'))
                     continue
-                if model == Review:
-                    title = Title.objects.get(id=row.pop('title_id'))
-                    row['title'] = title
-                    author = get_object_or_404(User, id=row.get('author'))
-                    row['author'] = author
-                if model == Title:
-                    category = get_object_or_404(Category,
-                                                 id=row.get('category'))
-                    row['category'] = category
-                if model == GenreTitle:
-                    title = get_object_or_404(Title, id=row.pop('title_id'))
-                    row['title'] = title
-                    genre = get_object_or_404(Genre, id=row.pop('genre_id'))
-                    row['genre'] = genre
-                if model == Comment:
-                    review = get_object_or_404(Review, id=row.pop('review_id'))
-                    row['review'] = review
-                    author = get_object_or_404(User, id=row.get('author'))
-                    row['author'] = author
-                objects_list.append(model.objects.create(**row))
+                try:
+                    if model == Review:
+                        title = Title.objects.get(id=row.pop('title_id'))
+                        row['title'] = title
+                        author = User.objects.get(id=row.get('author'))
+                        row['author'] = author
+                    if model == Title:
+                        category = Category.objects.get(id=row.get('category'))
+                        row['category'] = category
+                    if model == GenreTitle:
+                        title = Title.objects.get(id=row.pop('title_id'))
+                        row['title'] = title
+                        genre = Genre.objects.get(id=row.pop('genre_id'))
+                        row['genre'] = genre
+                    if model == Comment:
+                        review = Review.objects.get(id=row.pop('review_id'))
+                        row['review'] = review
+                        author = User.objects.get(id=row.get('author'))
+                        row['author'] = author
+                except ObjectDoesNotExist as e:
+                    sys.stdout.write(
+                        self.style.NOTICE(
+                            f'{e}\nОбъект по внешнему ключу не найден.\n'
+                            f'Проверьте связанные таблицы.\n'
+                            f'Запись не добавлена: {row}\n'))
+                    continue
+                else:
+                    objects_list.append(model(**row))
 
         return objects_list
