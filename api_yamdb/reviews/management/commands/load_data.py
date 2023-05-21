@@ -24,6 +24,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 from django.db.models import Model
+
 from reviews.models import (Category, Comment, Genre, GenreTitle, Review,
                             Title, User)
 
@@ -31,6 +32,16 @@ from reviews.models import (Category, Comment, Genre, GenreTitle, Review,
 class Command(BaseCommand):
     help = ('Загрузка данных из CSV файлов и запись их в БД. '
             'Укажите имя модели и путь до файла CSV через пробел.')
+
+    # Словарь для замены имен полей из csv файла на имена полей в модели.
+    # А также для выбора объектов по внешнему ключу в цикле.
+    MODELS_SWAP_FIELDS = {
+        Title: {'category': (Category, 'category')},
+        Review: {'title': (Title, 'title_id'), 'author': (User, 'author')},
+        GenreTitle: {'title': (Title, 'title_id'),
+                     'genre': (Genre, 'genre_id')},
+        Comment: {'review': (Review, 'review_id'), 'author': (User, 'author')},
+    }
 
     def add_arguments(self, parser) -> None:
         parser.add_argument('model', type=str,
@@ -78,33 +89,19 @@ class Command(BaseCommand):
                         self.style.NOTICE(
                             f'Объект с id = {row["id"]} уже существует.\n'))
                     continue
-                try:
-                    if model == Review:
-                        title = Title.objects.get(id=row.pop('title_id'))
-                        row['title'] = title
-                        author = User.objects.get(id=row.get('author'))
-                        row['author'] = author
-                    if model == Title:
-                        category = Category.objects.get(id=row.get('category'))
-                        row['category'] = category
-                    if model == GenreTitle:
-                        title = Title.objects.get(id=row.pop('title_id'))
-                        row['title'] = title
-                        genre = Genre.objects.get(id=row.pop('genre_id'))
-                        row['genre'] = genre
-                    if model == Comment:
-                        review = Review.objects.get(id=row.pop('review_id'))
-                        row['review'] = review
-                        author = User.objects.get(id=row.get('author'))
-                        row['author'] = author
-                except ObjectDoesNotExist as e:
-                    sys.stdout.write(
-                        self.style.NOTICE(
-                            f'{e}\nОбъект по внешнему ключу не найден.\n'
-                            f'Проверьте связанные таблицы.\n'
-                            f'Запись не добавлена: {row}\n'))
-                    continue
-                else:
-                    objects_list.append(model(**row))
+
+                if model in self.MODELS_SWAP_FIELDS:
+                    try:
+                        for fld, val in self.MODELS_SWAP_FIELDS[model].items():
+                            row[fld] = val[0].objects.get(id=row.pop(val[1]))
+                    except ObjectDoesNotExist as e:
+                        sys.stdout.write(
+                            self.style.NOTICE(
+                                f'{e}\nОбъект по внешнему ключу не найден.\n'
+                                f'Проверьте связанные таблицы.\n'
+                                f'Запись не добавлена: {row}\n'))
+                        continue
+
+                objects_list.append(model(**row))
 
         return objects_list
